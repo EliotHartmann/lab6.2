@@ -1,10 +1,14 @@
 import java.io.*;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class Commands {
-    public LinkedHSPolicemen set = new LinkedHSPolicemen(new Date());
+    public ConcurrentPolicemanSet set = new ConcurrentPolicemanSet(new Date());
     private String link;
+    WorkDatagram workDatagram = new WorkDatagram("localhost", 1337);
+
 
     public void setLink(String link) {
         this.link = link;
@@ -35,16 +39,20 @@ public class Commands {
      * Выводин список команд и их предназначение
      */
     private void help(){
-        System.out.println("Команда info выводит информацию о коллекции \nКоманда load перечитывает коллекцию из файла \nКоманда save сохраняет коллекцию в файл \nКоманда import добавляет в коллекцию данные из файла");
+        try {
+            workDatagram.sendString("Команда info выводит информацию о коллекции \nКоманда load перечитывает коллекцию из файла \nКоманда save сохраняет коллекцию в файл \nКоманда import добавляет в коллекцию данные из файла");
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Реализация команды info
      * Выводит информацию о состоянии коллекции
      */
-    private void info(){
-        LinkedHashSet linked = set.linkedHSPoliceman;
-        System.out.println("Тип коллекции: "+linked.getClass()+"\nКоличество элементов: "+linked.size()+"\nДата: "+set.date);
+    private void info() throws UnknownHostException{
+        CopyOnWriteArraySet<Policeman> cps = set.copyOnWriteArraySet;
+        workDatagram.sendString("Тип коллекции: "+cps.getClass()+ "\nРазмер коллекции: "+cps.size() + "\nДата: "+set.date);
     }
 
     /**
@@ -58,10 +66,10 @@ public class Commands {
         String thisLine;
         int count=0;
         while ((thisLine=bf.readLine())!=null){
-            set.linkedHSPoliceman.add(new WorkJSON().intoJSON(thisLine));
+            set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
             count++;
         }
-        System.out.println("Загружено в коллекцию "+count+" объектов");
+        workDatagram.sendString("Загружено в коллекцию "+count+" объектов");
     }
 
     /**
@@ -75,10 +83,10 @@ public class Commands {
         String thisLine;
         int count=0;
         while ((thisLine=bf.readLine())!=null){
-            set.linkedHSPoliceman.add(new WorkJSON().intoJSON(thisLine));
+            set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
             count++;
         }
-        System.out.println("Загрузилось "+count+" объектов");
+        workDatagram.sendString("Загрузилось "+count+" объектов");
     }
 
     /**
@@ -90,7 +98,7 @@ public class Commands {
         String thisLine = "";
         int count = 0;
         FileOutputStream fos = new FileOutputStream(link);
-        for (Policeman aLinkedHSPoliceman : this.set.linkedHSPoliceman) {
+        for (Policeman aLinkedHSPoliceman : this.set.copyOnWriteArraySet) {
             thisLine = System.lineSeparator()+ (new WorkJSON().toJSON(aLinkedHSPoliceman));
 
             try {
@@ -98,10 +106,10 @@ public class Commands {
                 fos.write(buffer, 0, buffer.length);
                 fos.flush();
                 } catch (IOException ex) {
-                System.out.println(ex.getMessage());
+                workDatagram.sendString(ex.getMessage());
             }
             count++;
         }
         fos.close();
-        System.out.println("Сохранено " + count + " объектов");
+        workDatagram.sendString("Сохранено " + count + " объектов");
 }}
