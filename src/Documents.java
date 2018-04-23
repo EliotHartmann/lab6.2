@@ -1,48 +1,41 @@
-import org.omg.CORBA.Object;
-
 import java.io.*;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.ReadWriteLock;
 
 public class Documents {
-    private Commands commands = new Commands();
+    private ReadWriteLock lock;
+    public Commands commands;
 
-    public void Begin() throws IOException {
+    public Documents(ReadWriteLock lock){
+        commands = new Commands(lock);
+    }
+
+
+    public String Begin(String string) throws IOException {
         String link="C:\\Users\\Acer\\Desktop\\file.txt";
         commands.setLink(link);
         this.start(link);
-        this.sort();
-        try {
-            String string;
-            for (; ; ) {
-                string = commands.workDatagram.receiveString();
-                System.out.println("Команда принята");
+       try {
+           System.out.println("Принята команда " + string);
+            for (; ;) {
                 if (string.trim().toLowerCase().equals("stop")) {
                     break;
                 } else {
-                    commands.thisCommand(string.toLowerCase());
+                    return(commands.thisCommand(string.toLowerCase()));
                 }
             }
-            this.sort();
-            this.stop(link);
+            commands.sort();
+            System.exit(0);
+            return (this.stop(link));
         }catch (NullPointerException e){
-            this.stop(link);
+           return (this.stop(link));
         }
     }
 
-    private void sort(){
-        Set<Policeman> policemanSet = new TreeSet<Policeman>(new Comparator<Policeman>() {
-            @Override
-            public int compare(Policeman o1, Policeman o2) {
-                return o1.toString().compareTo(o2.toString());
-            }
-        });
-        policemanSet.addAll(commands.set.copyOnWriteArraySet);
-        commands.set.copyOnWriteArraySet.removeAll(policemanSet);
-        commands.set.copyOnWriteArraySet.addAll(policemanSet);
-    }
 
-    private void start(String link) throws IOException {
+    private String start(String link) throws IOException {
         BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
         String thisLine;
         int count=0;
@@ -50,11 +43,12 @@ public class Documents {
             commands.set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
             count++;
         }
-        commands.workDatagram.sendString("Загружено "+count+" объектов");
+       return("Загружено "+count+" объектов");
     }
 
-    private void stop(String link) throws IOException{
+    private String stop(String link) throws IOException{
         String thisLine = "";
+        try {lock.writeLock().lock();
         FileOutputStream fos = new FileOutputStream(link);
         for (Policeman cps : commands.set.copyOnWriteArraySet) {
             thisLine = (new WorkJSON().toJSON(cps)) + System.lineSeparator();
@@ -63,14 +57,16 @@ public class Documents {
                 byte[] buffer = thisLine.getBytes();
                 fos.write(buffer, 0, buffer.length);
                 fos.flush();
-                commands.workDatagram.sendString(thisLine);
+                return thisLine;
             } catch (IOException ex) {
-                commands.workDatagram.sendString(ex.getMessage());
+                return ex.getMessage();
             }
-
         }
         fos.close();
-
+        return ("Остановка программы...");
+    }finally {
+            lock.writeLock().unlock();
+        }
     }
 }
 

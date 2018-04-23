@@ -1,4 +1,7 @@
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketAddress;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -38,7 +41,15 @@ public class Main {
         spectator.getTired();
         System.out.println(spectator.goToSleep());
         System.out.println(spectator.wakeUp());*/
-        Documents documents = new Documents();
-        documents.Begin();
+        //Documents documents = new Documents();
+        //documents.Begin();
+        Server server = new Server(9999);
+        server.createServer();
+        }
+        /*while (true){
+            Documents documents = new Documents();
+            documents.commands.workDatagram.receiveString();
+            new ClientThread();
+        }*/
     }
-}
+

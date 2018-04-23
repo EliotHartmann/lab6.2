@@ -1,14 +1,20 @@
 import java.io.*;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.ReadWriteLock;
 
 public class Commands {
-    public ConcurrentPolicemanSet set = new ConcurrentPolicemanSet(new Date());
-    private String link;
-    WorkDatagram workDatagram = new WorkDatagram("localhost", 1337);
 
+    public ConcurrentPolicemanSet set = new ConcurrentPolicemanSet(new Date());
+    public String link;
+    private ReadWriteLock lock;
+
+    public Commands(ReadWriteLock lock) {
+        this.lock=lock;
+    }
 
     public void setLink(String link) {
         this.link = link;
@@ -18,41 +24,39 @@ public class Commands {
      *
      * @param command
      */
-    public void thisCommand(String command) throws IOException {
-        if (command.trim().equals("info")){
-            this.info();
-        }else if(command.trim().equals("load")){
-            this.load(this.link);
-        }else if(command.trim().equals("save")){
-            this.save();
-        }else if(command.trim().startsWith("import")){
-            String time = command.trim().substring("import".length(),command.trim().length()).trim();
-            String time2=time.substring(1,time.length()-1).trim();
-            this.importCollection(time2);
-        }else if (command.trim().equals("help")){
-            this.help();
-        }else System.out.println("Команда не найдена");
+    public String thisCommand(String command) throws IOException {
+        if (command.trim().equals("info")) {
+            return this.info();
+        } else if (command.trim().equals("load")) {
+            return this.load(this.link);
+        } else if (command.trim().equals("save")) {
+            return this.save();
+        } else if (command.trim().startsWith("import")) {
+            String time = command.trim().substring("import".length(), command.trim().length()).trim();
+            String time2 = time.substring(1, time.length() - 1).trim();
+            return this.importCollection(time2);
+        } else if (command.trim().equals("help")) {
+            return this.help();
+        } else
+            return ("Команда не найдена");
     }
+
 
     /**
      * Реализация команды help
      * Выводин список команд и их предназначение
      */
-    private void help(){
-        try {
-            workDatagram.sendString("Команда info выводит информацию о коллекции \nКоманда load перечитывает коллекцию из файла \nКоманда save сохраняет коллекцию в файл \nКоманда import добавляет в коллекцию данные из файла");
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+    private String help(){
+        return "info - Выводит информацию о состоянии коллекции\n load - Заново загружает коллекцию из файла\n import{path} -  Добавляет в коллекцию все данные из файла.\n save - Сохраняет коллекцию в файл\n stop - Останавливает работу программы";
     }
 
     /**
      * Реализация команды info
      * Выводит информацию о состоянии коллекции
      */
-    private void info() throws UnknownHostException{
+    private String info(){
         CopyOnWriteArraySet<Policeman> cps = set.copyOnWriteArraySet;
-        workDatagram.sendString("Тип коллекции: "+cps.getClass()+ "\nРазмер коллекции: "+cps.size() + "\nДата: "+set.date);
+        return "Тип коллекции: "+cps.getClass()+ "\nРазмер коллекции: "+cps.size() + "\nДата: "+set.date;
     }
 
     /**
@@ -61,15 +65,20 @@ public class Commands {
      * @param link - путь до файла
      * @throws IOException
      */
-    private void load(String link) throws IOException {
-        BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
-        String thisLine;
-        int count=0;
-        while ((thisLine=bf.readLine())!=null){
-            set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
-            count++;
+    private String load(String link) throws IOException {
+        try {
+            lock.writeLock().lock();
+            BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
+            String thisLine;
+            int count = 0;
+            while ((thisLine = bf.readLine()) != null) {
+                set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
+                count++;
+            }
+            return "Загружено в коллекцию " + count + " объектов";
+        }finally {
+            lock.writeLock().unlock();
         }
-        workDatagram.sendString("Загружено в коллекцию "+count+" объектов");
     }
 
     /**
@@ -78,15 +87,20 @@ public class Commands {
      * @param link - путь до файла
      * @throws IOException
      */
-    private void importCollection(String link) throws IOException {
-        BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
-        String thisLine;
-        int count=0;
-        while ((thisLine=bf.readLine())!=null){
-            set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
-            count++;
+    private String importCollection(String link) throws IOException {
+        try {
+            lock.writeLock().lock();
+            BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
+            String thisLine;
+            int count = 0;
+            while ((thisLine = bf.readLine()) != null) {
+                set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
+                count++;
+            }
+            return "Загрузилось " + count + " объектов";
+        }finally {
+            lock.writeLock().unlock();
         }
-        workDatagram.sendString("Загрузилось "+count+" объектов");
     }
 
     /**
@@ -94,7 +108,7 @@ public class Commands {
      * Сохраняет коллекцию в файл
      * @throws IOException
      */
-    private void save() throws IOException{
+    private String save() throws IOException{
         String thisLine = "";
         int count = 0;
         FileOutputStream fos = new FileOutputStream(link);
@@ -106,10 +120,28 @@ public class Commands {
                 fos.write(buffer, 0, buffer.length);
                 fos.flush();
                 } catch (IOException ex) {
-                workDatagram.sendString(ex.getMessage());
+
+                return ex.getMessage();
             }
             count++;
         }
         fos.close();
-        workDatagram.sendString("Сохранено " + count + " объектов");
-}}
+        return "Сохранено " + count + " объектов";
+}
+
+    public void sort(){
+        try {lock.writeLock().lock();
+            Set<Policeman> policemanSet = new TreeSet<Policeman>(new Comparator<Policeman>() {
+                @Override
+                public int compare(Policeman o1, Policeman o2) {
+                    return o1.toString().compareTo(o2.toString());
+                }
+            });
+            policemanSet.addAll(set.copyOnWriteArraySet);
+            set.copyOnWriteArraySet.removeAll(policemanSet);
+            set.copyOnWriteArraySet.addAll(policemanSet);
+        }finally {
+            lock.writeLock().unlock();
+        }
+    }
+}
