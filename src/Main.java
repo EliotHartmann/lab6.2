@@ -1,7 +1,8 @@
+import javax.print.Doc;
+import javax.swing.*;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.SocketAddress;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -43,13 +44,38 @@ public class Main {
         System.out.println(spectator.wakeUp());*/
         //Documents documents = new Documents();
         //documents.Begin();
+
+//        Commands.set.copyOnWriteArraySet.removeAll(Commands.set.copyOnWriteArraySet);
+        ReadWriteLock lock = new ReentrantReadWriteLock();
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new ServerGUI(lock);
+            }
+        });
         Server server = new Server(9999);
         server.createServer();
-        }
+
         /*while (true){
             Documents documents = new Documents();
             documents.commands.workDatagram.receiveString();
             new ClientThread();
-        }*/
-    }
+//        }*/
+//        String link = "C:\\Users\\Acer\\Desktop\\file.txt";
 
+//
+//        System.out.println(commands.info());
+//        commands.collintoarray();
+
+
+//       documents.writeSomeObjects(link);
+
+//
+//        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+//            @Override
+//            public void run() {
+//                new ClientGUI(lock);
+//            }
+//        });
+    }
+}

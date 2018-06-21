@@ -27,9 +27,9 @@ public class Battle {
         int selectActivity;
         Battle battle = new Battle();
 
-        Policeman Пётр = new Policeman("Пётр");
-        Policeman Сергей = new Policeman("Сергей");
-        Policeman Иван = new Policeman("Иван");
+        Policeman Пётр = new Policeman("Андрей", 22, "abc");
+        Policeman Сергей = new Policeman("Андрей", 22, "abc");
+        Policeman Иван = new Policeman("Андрей", 22, "abc");
         Criminal СаняМалой = new Criminal("Саня Малой");
         Criminal ВасяПуля = new Criminal("Вася Пуля");
         Criminal ЛёхаКастет = new Criminal("Лёха Кастет");

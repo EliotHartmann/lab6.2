@@ -1,7 +1,4 @@
 import java.io.*;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 public class Documents {
@@ -9,64 +6,79 @@ public class Documents {
     public Commands commands;
 
     public Documents(ReadWriteLock lock){
+        this.lock=lock;
         commands = new Commands(lock);
     }
 
 
     public String Begin(String string) throws IOException {
-        String link="C:\\Users\\Acer\\Desktop\\file.txt";
+        String link = "C:\\Users\\Acer\\Desktop\\file.txt";
         commands.setLink(link);
+        //return this.writeSomeObjects(link);
+
         this.start(link);
        try {
            System.out.println("Принята команда " + string);
-            for (; ;) {
                 if (string.trim().toLowerCase().equals("stop")) {
-                    break;
                 } else {
                     return(commands.thisCommand(string.toLowerCase()));
                 }
-            }
             commands.sort();
-            System.exit(0);
             return (this.stop(link));
         }catch (NullPointerException e){
            return (this.stop(link));
-        }
+        }catch (FileNotFoundException e){
+           System.out.println("Файл не найден");
+           return "0";
+       }
     }
 
+    public String writeSomeObjects(String link) throws IOException {
+        ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
+        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Андрей", 22, "abc")));
+        ous.flush();
+        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Иван", 32, "abcа")));
+        ous.flush();
+        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Павел", 42, "abcab")));
+        ous.close();
+        return "Объекты загружены";
+    }
 
     private String start(String link) throws IOException {
-        BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
-        String thisLine;
+
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(link));
         int count=0;
-        while ((thisLine=bf.readLine())!=null){
-            commands.set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
-            count++;
+        try {
+            while (true){
+                Policeman policeman = (Policeman) ois.readObject();
+                commands.set.copyOnWriteArraySet.add(policeman);
+                count++;
+            }
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }finally{
+            return("Загружено "+count+" объектов");
         }
-       return("Загружено "+count+" объектов");
     }
 
     private String stop(String link) throws IOException{
-        String thisLine = "";
-        try {lock.writeLock().lock();
-        FileOutputStream fos = new FileOutputStream(link);
-        for (Policeman cps : commands.set.copyOnWriteArraySet) {
-            thisLine = (new WorkJSON().toJSON(cps)) + System.lineSeparator();
-
+        try {lock.readLock().lock();
+        ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
             try {
-                byte[] buffer = thisLine.getBytes();
-                fos.write(buffer, 0, buffer.length);
-                fos.flush();
-                return thisLine;
+            for (Policeman cps : commands.set.copyOnWriteArraySet) {
+            ous.writeObject(cps);
+            ous.flush();
+            ous.close();
+        }
             } catch (IOException ex) {
                 return ex.getMessage();
             }
+        }finally {
+            lock.readLock().unlock();
+            return ("Остановка программы...");
         }
-        fos.close();
-        return ("Остановка программы...");
-    }finally {
-            lock.writeLock().unlock();
-        }
+
     }
 }
 

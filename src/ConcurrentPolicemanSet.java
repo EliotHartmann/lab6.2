@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class ConcurrentPolicemanSet extends CopyOnWriteArraySet {
+public class ConcurrentPolicemanSet<P> extends CopyOnWriteArraySet {
     Date date;
     CopyOnWriteArraySet<Policeman> copyOnWriteArraySet = new CopyOnWriteArraySet<>();
     ConcurrentPolicemanSet(Date date){

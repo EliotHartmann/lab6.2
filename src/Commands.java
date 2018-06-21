@@ -1,15 +1,12 @@
 import java.io.*;
-import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public class Commands {
+public class Commands{
 
-    public ConcurrentPolicemanSet set = new ConcurrentPolicemanSet(new Date());
-    public String link;
+    static public ConcurrentPolicemanSet<Policeman> set = new ConcurrentPolicemanSet<Policeman>(new Date());
+    static String link = "C:\\Users\\Acer\\Desktop\\file.txt";
     private ReadWriteLock lock;
 
     public Commands(ReadWriteLock lock) {
@@ -24,7 +21,7 @@ public class Commands {
      *
      * @param command
      */
-    public String thisCommand(String command) throws IOException {
+    public String thisCommand(String command) throws IOException{
         if (command.trim().equals("info")) {
             return this.info();
         } else if (command.trim().equals("load")) {
@@ -46,18 +43,26 @@ public class Commands {
      * Реализация команды help
      * Выводин список команд и их предназначение
      */
-    private String help(){
-        return "info - Выводит информацию о состоянии коллекции\n load - Заново загружает коллекцию из файла\n import{path} -  Добавляет в коллекцию все данные из файла.\n save - Сохраняет коллекцию в файл\n stop - Останавливает работу программы";
+    public String help(){
+        return "info - Выводит информацию о состоянии коллекции load - Заново загружает коллекцию из файла import{path} -  Добавляет в коллекцию все данные из файла. save - Сохраняет коллекцию в файл\n stop - Останавливает работу программы";
     }
 
     /**
      * Реализация команды info
      * Выводит информацию о состоянии коллекции
      */
-    private String info(){
-        CopyOnWriteArraySet<Policeman> cps = set.copyOnWriteArraySet;
-        return "Тип коллекции: "+cps.getClass()+ "\nРазмер коллекции: "+cps.size() + "\nДата: "+set.date;
+    public String info(){
+        try{
+            lock.readLock().lock();
+            CopyOnWriteArraySet<Policeman> cps = set.copyOnWriteArraySet;
+            return "Тип коллекции: "+cps.getClass()+ " Размер коллекции: "+cps.size() + " Дата: "+set.date;
+        }
+    finally {
+            lock.readLock().unlock();
+        }
     }
+
+
 
     /**
      * Реализация команды load
@@ -65,20 +70,22 @@ public class Commands {
      * @param link - путь до файла
      * @throws IOException
      */
-    private String load(String link) throws IOException {
+    public String load(String link) throws IOException {
         try {
             lock.writeLock().lock();
-            BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
-            String thisLine;
-            int count = 0;
-            while ((thisLine = bf.readLine()) != null) {
-                set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
-                count++;
+
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(link));
+            while (true) {
+                Policeman policeman = (Policeman) ois.readObject();
+                set.copyOnWriteArraySet.add(policeman);
             }
-            return "Загружено в коллекцию " + count + " объектов";
-        }finally {
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
             lock.writeLock().unlock();
+            return "Объекты загружены";
         }
+
     }
 
     /**
@@ -87,20 +94,22 @@ public class Commands {
      * @param link - путь до файла
      * @throws IOException
      */
-    private String importCollection(String link) throws IOException {
+    public String importCollection(String link) throws IOException {
         try {
             lock.writeLock().lock();
-            BufferedReader bf = new BufferedReader(new InputStreamReader(new FileInputStream(link)));
-            String thisLine;
-            int count = 0;
-            while ((thisLine = bf.readLine()) != null) {
-                set.copyOnWriteArraySet.add(new WorkJSON().intoJSON(thisLine));
-                count++;
+            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(link));
+            while (true) {
+                Policeman policeman = (Policeman) ois.readObject();
+                set.copyOnWriteArraySet.add(policeman);
             }
-            return "Загрузилось " + count + " объектов";
-        }finally {
+
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
             lock.writeLock().unlock();
+            return "Объекты из файла " + link + "загружены";
         }
+
     }
 
     /**
@@ -108,26 +117,22 @@ public class Commands {
      * Сохраняет коллекцию в файл
      * @throws IOException
      */
-    private String save() throws IOException{
-        String thisLine = "";
-        int count = 0;
-        FileOutputStream fos = new FileOutputStream(link);
-        for (Policeman aLinkedHSPoliceman : this.set.copyOnWriteArraySet) {
-            thisLine = System.lineSeparator()+ (new WorkJSON().toJSON(aLinkedHSPoliceman));
-
-            try {
-                byte[] buffer = thisLine.getBytes();
-                fos.write(buffer, 0, buffer.length);
-                fos.flush();
-                } catch (IOException ex) {
-
-                return ex.getMessage();
-            }
+    public String save() throws IOException{
+        try{
+        lock.readLock().lock();
+            int count = 0;
+        ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
+        for (Policeman aLinkedHSPoliceman : set.copyOnWriteArraySet) {
+            ous.writeObject(aLinkedHSPoliceman);
             count++;
         }
-        fos.close();
+        ous.flush();
+        ous.close();
         return "Сохранено " + count + " объектов";
-}
+        }finally {
+            lock.readLock().unlock();
+        }
+        }
 
     public void sort(){
         try {lock.writeLock().lock();
@@ -144,4 +149,20 @@ public class Commands {
             lock.writeLock().unlock();
         }
     }
+//    public String[][] collintoarray(){
+//        CopyOnWriteArraySet<Policeman> cps = set.copyOnWriteArraySet;
+//        int n = cps.size();
+//        String[][] a = new String[n][3];
+//        Iterator<Policeman> iterator = cps.iterator();
+//        for(int i =0; i<n; i++){
+//            if (iterator.hasNext()){
+//                Policeman policeman = iterator.next();
+//                a[i][0] = policeman.getName();
+//                a[i][1] = String.valueOf(policeman.getAge());;
+//                a[i][2] = policeman.getDescribition();
+//        }else
+//            break;
+//    }
+//    return a;
+//}
 }
