@@ -47,6 +47,11 @@ public class Main {
 
 //        Commands.set.copyOnWriteArraySet.removeAll(Commands.set.copyOnWriteArraySet);
         ReadWriteLock lock = new ReentrantReadWriteLock();
+//        User.users.add(new User("eliot", "iameliot"));
+//        User.users.add(new User("slim", "iamslim"));
+//        User.save();
+        User.load();
+        System.out.println(User.users.size());
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {

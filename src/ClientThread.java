@@ -8,67 +8,81 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class ClientThread implements Runnable{
     String string;
     private Socket socket;
-    private Documents documents;
-    private Commands commands;
     private WorkJSON workJSON = new WorkJSON();
-    private int ID;
-    private String login;
-    private String pswd;
-    public String answer;
+    private boolean answer;
+    private String userLogin;
+    private boolean userStatus;
 
-    public String getLogin() {
-        return login;
-    }
 
-    public String getPswd() {
-        return pswd;
-    }
 
     public void run(){
-        try {
-            try(
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+           try{
                 PrintStream ps = new PrintStream(socket.getOutputStream());
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()))){
-                int n = Commands.set.copyOnWriteArraySet.size();
-
-                ArrayList<Policeman> policemen= new ArrayList<>(Commands.set.copyOnWriteArraySet);
-                ps.println("start");
-                ps.flush();
-                System.out.println("start");
-                ps.println(String.valueOf(n));
-                ps.flush();
-                System.out.println(n);
-                for (int i=0; i<n; i++ ){
-                    ps.println(workJSON.toJSON(policemen.get(i)));
-                    System.out.println(workJSON.toJSON(policemen.get(i)));
-                    ps.flush();
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String message;
+                while(true){
+                    message = br.readLine();
+                    if(message.equals("start")){
+                        System.out.println("start");
+                        for(Policeman policeman : Commands.set.copyOnWriteArraySet){
+                            ps.println(WorkJSON.toJSON(policeman));
+                            System.out.println(WorkJSON.toJSON(policeman));
+                            ps.flush();
+                        }
+                        ps.println("end");
+                        System.out.println("end");
+                    }
+                    if(message.equals("check")) {
+                        String login = br.readLine();
+                        String pswd = br.readLine();
+                    System.out.println(login);
+                    System.out.println(pswd);
+                    for (User user : User.users) {
+                       if (user.getPassword().equals(pswd) && user.getLogin().equals(login)) {
+                           if(!user.isBanned()) {
+                               userLogin = user.getLogin();
+                               userStatus = true;
+                               user.setStatus(true);
+                               ServerGUI.userModel.updateModel(login);
+                               System.out.println(user.getLogin());
+                               ps.println("true");
+                               ps.flush();
+                               answer = true;
+                           }else
+                                ps.println("ban");
+                                ps.flush();
+                                answer = true;
+                       }
+                   }
+                   if (!answer) {
+                       ps.println("false");
+                       ps.flush();
+                   } else
+                       answer = false;
+               }if(message.equals("new")){
+                        String login = br.readLine();
+                        String pswd = br.readLine();
+                        User.users.add(new User(login, pswd));
+                        ServerGUI.userModel.addAndUpdate(login, pswd);
+                        System.out.println("new user " + login);
+                        User.save();
+                    }
                 }
-                ps.println("stop");
-                System.out.println("stop");
-//                login = br.readLine();
-//                pswd = br.readLine();
-//                for (User user: User.users){
-//                    if(user.getLogin().equals(login)&&user.getPassword().equals(pswd)){
-//                        answer = "true";
-//                        ps.println(answer);
-//                        break;
-//                    }
-//                }
-//                if(!answer.equals("true")){
-//                    ps.println("false");
-//                }
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        } catch (IOException e1) {
+               System.out.println("Пользователь отключен");
+               for (User user : User.users){
+                   if(user.getLogin().equals(userLogin) && user.isStatus()==userStatus){
+                       user.setStatus(false);
+                       ServerGUI.userModel.updateModel(userLogin);
+                   }
+               }
+           }
     }
+
     ClientThread(int count, Socket socket, ReadWriteLock lock) {
         this.socket=socket;
-        ID = count;
-        documents = new Documents(lock);
+        int ID = count;
+        Documents documents = new Documents(lock);
         Thread thread = new Thread(this);
         thread.start();
     }

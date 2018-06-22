@@ -20,9 +20,7 @@ private int port;
                 new ClientThread(ID, socket, lock);
                 ID++;
             }
-        }catch (UnknownHostException e){
-            e.printStackTrace();
-        }catch (IOException e){
+        } catch (IOException e){
             e.printStackTrace();
         }
     }

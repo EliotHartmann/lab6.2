@@ -1,14 +1,23 @@
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 
-public class User {
+public class User implements Serializable{
     private String login;
+    private boolean status;
+    private boolean banned;
     private String password;
 
-    static ArrayList<User> users = new ArrayList<>();
-    String link = "C:\\Users\\Acer\\usersdb.txt";
 
-    public void save(String link){
+    public User(String login, String password){
+        this.login = login;
+        this.password = password;
+    }
+
+    static HashSet<User> users = new HashSet<>();
+    static String link = "C:\\Users\\Acer\\Desktop\\usersdb.txt";
+
+    public static void save(){
         try{
             ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
             for (User user : users) {
@@ -20,7 +29,7 @@ public class User {
             e.printStackTrace();
         }
     }
-    public void load(String link){
+    public static void load(){
         try {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(link));
             while (true) {
@@ -28,7 +37,7 @@ public class User {
                 users.add(user);
             }
         } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
+            System.out.println("ну да конец файла, а ты чего ожидал?");
         }
     }
     public String getLogin() {
@@ -45,5 +54,21 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public boolean isStatus() {
+        return status;
+    }
+
+    public void setStatus(boolean status) {
+        this.status = status;
+    }
+
+    public boolean isBanned() {
+        return banned;
+    }
+
+    public void setBanned(boolean banned) {
+        this.banned = banned;
     }
 }

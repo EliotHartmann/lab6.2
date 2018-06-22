@@ -1,7 +1,5 @@
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class TableModel extends AbstractTableModel{
@@ -55,7 +53,7 @@ public class TableModel extends AbstractTableModel{
         }
     }
     public void updateModel(String n, int a, String c){
-        policemen.add(new Policeman(n, a, c));
+        policemen.add(new PolicemanBuilder().name(n).age(a).colour(c).build());
         fireTableDataChanged();
     }
 }

@@ -32,17 +32,17 @@ public class Documents {
            return "0";
        }
     }
-
-    public String writeSomeObjects(String link) throws IOException {
-        ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
-        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Андрей", 22, "abc")));
-        ous.flush();
-        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Иван", 32, "abcа")));
-        ous.flush();
-        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Павел", 42, "abcab")));
-        ous.close();
-        return "Объекты загружены";
-    }
+//
+//    public String writeSomeObjects(String link) throws IOException {
+//        ObjectOutputStream ous = new ObjectOutputStream(new FileOutputStream(link));
+//        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Андрей", 22, "abc")));
+//        ous.flush();
+//        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Иван", 32, "abcа")));
+//        ous.flush();
+//        ous.writeObject(commands.set.copyOnWriteArraySet.add(new Policeman("Павел", 42, "abcab")));
+//        ous.close();
+//        return "Объекты загружены";
+//    }
 
     private String start(String link) throws IOException {
 
