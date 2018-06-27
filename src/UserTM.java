@@ -49,13 +49,21 @@ public class UserTM extends AbstractTableModel{
             }
         }
 
-        public void updateModel(String login){
+        public void updateModeltrue(String login){
             for(User user: users){
                 if(user.getLogin().equals(login))
                     user.setStatus(true);
             }
             fireTableDataChanged();
         }
+    public void updateModelfalse(String login){
+        for(User user: users){
+            if(user.getLogin().equals(login))
+                user.setStatus(false);
+        }
+        fireTableDataChanged();
+    }
+
         public void addAndUpdate(String l, String s){
             users.add(new User(l, s));
             fireTableDataChanged();

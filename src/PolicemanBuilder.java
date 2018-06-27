@@ -1,16 +1,20 @@
-
+import java.time.LocalDateTime;
 
 public class PolicemanBuilder {
-    private int healthPoint;
+    private int ID_Policeman;
     private String name;
     private String colour;
     private int age;
-    private String describition = "Вооруженные до зубов";
-    private Transport transport;
     private int x1;
     private int y1;
     private int height;
     private int width;
+    LocalDateTime createTime;
+
+    public PolicemanBuilder ID_Policeman(int ID_Policeman){
+        this.ID_Policeman = ID_Policeman;
+        return this;
+    }
 
     public PolicemanBuilder name(String name){
         this.name = name;
@@ -41,12 +45,18 @@ public class PolicemanBuilder {
         this.width = width;
         return this;
     }
+    public  PolicemanBuilder createTime(){
+        this.createTime = LocalDateTime.now();
+        return this;
+    }
 
     public Policeman build(){
         return new Policeman(this);
     }
 
-
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
 
     public String getName() {
         return name;
@@ -60,6 +70,9 @@ public class PolicemanBuilder {
         return age;
     }
 
+    public int getID_Policeman() {
+        return ID_Policeman;
+    }
 
     public int getX1() {
         return x1;

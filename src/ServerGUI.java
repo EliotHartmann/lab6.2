@@ -1,12 +1,14 @@
-import javax.print.Doc;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.concurrent.locks.Lock;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.concurrent.locks.ReadWriteLock;
 
 
@@ -14,21 +16,19 @@ import java.util.concurrent.locks.ReadWriteLock;
     public class ServerGUI extends JFrame {
     public Documents documents;
     public Commands commands;
-    public static UserTM userModel = new UserTM(User.users);
+    public static UserTM userModel = new UserTM(Users.users);
+    DBManager<Policeman> policemanDBManager = new DBManager(Policeman.class);
+    int count = 0;
 
-    ServerGUI(ReadWriteLock lock) {
 
+
+        ServerGUI(ReadWriteLock lock) {
         super("Server");
+        ResourceBundle ruBundle = ResourceBundle.getBundle("resource.resource", new Locale("ru", "RU"));
         ReadWriteLock lock1 = lock;
 
         documents = new Documents(lock);
         commands = new Commands(lock);
-
-        try {
-            commands.load(Commands.link);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         TableModel tModel = new TableModel(Commands.set.copyOnWriteArraySet);
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -60,6 +60,7 @@ import java.util.concurrent.locks.ReadWriteLock;
                 "BLUE",
                 "GREEN"
         };
+
         JComboBox colourComboBox = new JComboBox(colours);
         txtPanel.add(colourComboBox);
         JTable table = new JTable(tModel);
@@ -81,15 +82,17 @@ import java.util.concurrent.locks.ReadWriteLock;
 
                 Commands.set.copyOnWriteArraySet.add(
                         new PolicemanBuilder().name(name.getText())
+                                .ID_Policeman(count+1)
                                 .age(ageSlider.getValue())
                                 .colour(colourComboBox.getSelectedItem().toString())
                                 .x1(-300 + (int)(Math.random()*600))
                                 .y1(-300 + (int)(Math.random()*600))
                                 .height((int)(Math.random()*200))
                                 .width((int)(Math.random()*200))
+                                .createTime()
                                 .build()
                                 );
-
+                count++;
                 tModel.updateModel(name.getText(), ageSlider.getValue(), colourComboBox.getSelectedItem().toString());
             }
         });
@@ -123,12 +126,8 @@ import java.util.concurrent.locks.ReadWriteLock;
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    MyDialog saveDialog = new MyDialog(ServerGUI.this, commands.save());
-                    saveDialog.setVisible(true);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                    for (Policeman policeman : Commands.set.copyOnWriteArraySet)
+                    policemanDBManager.insert(policeman);
             }
         });
 
@@ -146,6 +145,11 @@ import java.util.concurrent.locks.ReadWriteLock;
             }
         });
 
+        JMenu language = new JMenu("Language");
+        JMenuItem ru = new JMenuItem(ruBundle.getString("Language"));
+        language.add(ru);
+        mainMenu.add(language);
+
         TextField login = new TextField(10);
         JLabel loginL = new JLabel("login");
         JPanel loginPanel = new JPanel();
@@ -161,9 +165,22 @@ import java.util.concurrent.locks.ReadWriteLock;
         banPanel.add(loginPanel);
         banPanel.add(banButton);
 
-        banButton.addActionListener(e -> {
+            ru.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    loginPanel.remove(loginL);
+                    loginPanel.add(new JLabel(ruBundle.getString("ban")));
+                    container.revalidate();
+                    container.repaint();
+
+                }
+            });
+
+
+            banButton.addActionListener(e -> {
             String alogin = login.getText();
-            for(User user: User.users){
+            for(User user: Users.users){
                 if(user.getLogin().equals(alogin)){
                     user.setBanned(true);
                 }

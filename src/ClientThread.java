@@ -37,13 +37,13 @@ public class ClientThread implements Runnable{
                         String pswd = br.readLine();
                     System.out.println(login);
                     System.out.println(pswd);
-                    for (User user : User.users) {
+                    for (User user : Users.users) {
                        if (user.getPassword().equals(pswd) && user.getLogin().equals(login)) {
                            if(!user.isBanned()) {
                                userLogin = user.getLogin();
                                userStatus = true;
                                user.setStatus(true);
-                               ServerGUI.userModel.updateModel(login);
+                               ServerGUI.userModel.updateModeltrue(login);
                                System.out.println(user.getLogin());
                                ps.println("true");
                                ps.flush();
@@ -62,18 +62,21 @@ public class ClientThread implements Runnable{
                }if(message.equals("new")){
                         String login = br.readLine();
                         String pswd = br.readLine();
-                        User.users.add(new User(login, pswd));
+                        Users.users.add(new User(login, pswd));
                         ServerGUI.userModel.addAndUpdate(login, pswd);
                         System.out.println("new user " + login);
-                        User.save();
+                        DBManager<User> userDBManager= new DBManager<>(User.class);
+                        for(User user : Users.users){
+                            userDBManager.insert(user);
+                        }
                     }
                 }
         } catch (IOException e1) {
                System.out.println("Пользователь отключен");
-               for (User user : User.users){
+               for (User user : Users.users){
                    if(user.getLogin().equals(userLogin) && user.isStatus()==userStatus){
                        user.setStatus(false);
-                       ServerGUI.userModel.updateModel(userLogin);
+                       ServerGUI.userModel.updateModelfalse(userLogin);
                    }
                }
            }

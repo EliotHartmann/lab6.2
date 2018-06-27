@@ -53,7 +53,7 @@ public class TableModel extends AbstractTableModel{
         }
     }
     public void updateModel(String n, int a, String c){
-        policemen.add(new PolicemanBuilder().name(n).age(a).colour(c).build());
+        policemen.add(new PolicemanBuilder().name(n).age(a).colour(c).createTime().build());
         fireTableDataChanged();
     }
 }

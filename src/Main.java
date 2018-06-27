@@ -1,86 +1,70 @@
 import javax.print.Doc;
 import javax.swing.*;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        /*Spectator spectator = new Spectator();
-        Shorty Зязя = new Shorty("Зязя");
-        Shorty Зюзя = new Shorty("Зюзя");
-        Shorty Зизя = new Shorty("Зизя");
-        CinemaSeat cinemaSeat = new CinemaSeat();
-        MovieShow movieShow = new MovieShow();
-        Noize noize = new Noize();
-        Light light = new Light();
-        Battle battle = new Battle();
-        CinemaRoom cinemaRoom = new CinemaRoom();
 
-        System.out.println(Зязя.toThinkAboutTakingSeat());
-        System.out.println(Зюзя.toThinkAboutTakingSeat());
-        System.out.println(Зизя.toThinkAboutTakingSeat());
-
-        System.out.println(Зязя.takeSeat());
-        System.out.println(Зюзя.takeSeat());
-        System.out.println(Зизя.takeSeat());
-
-        System.out.println(cinemaRoom.startMovie());
-        battle.startBattle();
-        System.out.println(spectator.toScream());
-        spectator.toWatchHorror();
-        noize.setNoizeVolume(70);
-        System.out.println(cinemaRoom.becomeQuiter());
-        System.out.println(cinemaRoom.becomeQuiter());
-        System.out.println(cinemaRoom.becomeQuiter());
-        System.out.println(cinemaRoom.NoizeOff());
-
-        System.out.println(Зязя.goToSleep());
-        System.out.println(Зюзя.goToSleep());
-        System.out.println(Зизя.goToSleep());
-
-        spectator.getTired();
-        System.out.println(spectator.goToSleep());
-        System.out.println(spectator.wakeUp());*/
-        //Documents documents = new Documents();
-        //documents.Begin();
-
-//        Commands.set.copyOnWriteArraySet.removeAll(Commands.set.copyOnWriteArraySet);
         ReadWriteLock lock = new ReentrantReadWriteLock();
-//        User.users.add(new User("eliot", "iameliot"));
-//        User.users.add(new User("slim", "iamslim"));
-//        User.save();
-        User.load();
-        System.out.println(User.users.size());
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new ServerGUI(lock);
-            }
-        });
+        int count = 0;
+        DBManager<User> userdbManager = new DBManager(User.class);
+        userdbManager.dropTable();
+        userdbManager.create();
+
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/lab8", "postgres", "12345");
+            ResultSet res = connection.createStatement().executeQuery("SELECT COUNT(*) FROM \"User\"");
+            if(res.next())
+            count = res.getInt("count");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        for(int i =0; i<count; i++) {
+            Users.users.add(userdbManager.getObject(userdbManager.executeQuery("SELECT * FROM \"User\"")));
+        }
+
+        DBManager<Policeman> policemanDBManager = new DBManager(Policeman.class);
+        try {
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/lab8", "postgres", "12345");
+            ResultSet res = connection.createStatement().executeQuery("SELECT COUNT(*) FROM \"Policeman\"");
+            if(res.next())
+                count = res.getInt("count");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        for(int i =0; i<count; i++) {
+            Commands.set.copyOnWriteArraySet.add(policemanDBManager.getObject(policemanDBManager.executeQuery("SELECT * FROM \"Policeman\"")));
+        }
+
+//        System.out.println(User.users.size());
+        javax.swing.SwingUtilities.invokeLater(() -> new ServerGUI(lock));
         Server server = new Server(9999);
         server.createServer();
 
-        /*while (true){
-            Documents documents = new Documents();
-            documents.commands.workDatagram.receiveString();
-            new ClientThread();
-//        }*/
-//        String link = "C:\\Users\\Acer\\Desktop\\file.txt";
-
-//
-//        System.out.println(commands.info());
-//        commands.collintoarray();
-
-
-//       documents.writeSomeObjects(link);
-
-//
-//        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-//            @Override
-//            public void run() {
-//                new ClientGUI(lock);
+//        DBManager dbManager = new DBManager(testClass.class);
+//        dbManager.create();
+//        testClass testClass = new testClass(1, true);
+//        dbManager.insert(testClass);
+//        dbManager.delete(testClass);
+//        dbManager.dropTable();
+//        Object object = dbManager.getObject(dbManager.executeQuery("SELECT * FROM testClass"));
+//        for (Field field : object.getClass().getDeclaredFields()) {
+//            field.setAccessible(true);
+//            System.out.println(field.getType().toString());
+//            try {
+//                System.out.println(field.get(object));
+//            } catch (IllegalAccessException e) {
+//                e.printStackTrace();
 //            }
-//        });
+//        }
+
+
     }
 }
